@@ -1,0 +1,21 @@
+services:
+  web:
+    image: web-nextjs-pipeline:latest
+    networks:
+      - nextjs-pipeline-network
+      - traefik_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_public_network"
+      - "traefik.http.routers.web-nextjs-pipeline.rule=Host(`nextjs.mahansal.dev`)"
+      - "traefik.http.routers.web-nextjs-pipeline.entrypoints=websecure"
+      - "traefik.http.routers.web-nextjs-pipeline.tls=true"
+      - "traefik.http.routers.web-nextjs-pipeline.tls.certresolver=myresolver"
+      - "traefik.http.services.nextjs-pipeline.loadbalancer.server.port=3000"
+
+
+networks:
+  nextjs-pipeline-network:
+  traefik_net:
+    name: traefik_public_network # Must match the name defined in Traefik's compose file
+    external: true
