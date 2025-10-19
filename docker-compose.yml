@@ -1,13 +1,13 @@
 services:
   web:
-    image: web-nextjs-pipeline:latest
+    image: ghcr.io/marwaneahansal/nextjs-pipeline:latest
     networks:
       - nextjs-pipeline-network
       - traefik_net
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_public_network"
-      - "traefik.http.routers.web-nextjs-pipeline.rule=Host(`nextjs.mahansal.dev`)"
+      - "traefik.http.routers.web-nextjs-pipeline.rule=Host(`${NEXTJS_HOST:-nextjs.localhost}`)"
       - "traefik.http.routers.web-nextjs-pipeline.entrypoints=websecure"
       - "traefik.http.routers.web-nextjs-pipeline.tls=true"
       - "traefik.http.routers.web-nextjs-pipeline.tls.certresolver=myresolver"
