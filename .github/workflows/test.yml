@@ -9,11 +9,13 @@ jobs:
     steps:
       - name: Setup SSH key
         run: |
-          eval $(ssh-agent -s)
-          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" | ssh-add -
           mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-    
+          # Verify the key was created
+          ls -la ~/.ssh/id_rsa
+      
       - name: Test SSH connectivity
         run: |
           ssh -v ${{ secrets.USER }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
