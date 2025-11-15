@@ -1,10 +1,9 @@
 name: CI/CD Pipeline
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 
 permissions:
@@ -43,20 +42,35 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
     - name: Test SSH connection
       run: |
-        nc -zv ${{ secrets.HOST }} 22
+        ssh -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
 
-    - name: create env file
+    - name: Create env file
       run: |
         echo "GIT_COMMIT_HASH=${{ github.sha }}" >> ./envfile
 
-    - name: Docker Stack Deploy
-      uses: cssnr/stack-deploy-action@v1
-      with:
-        name: nextjs-pipeline
-        file: docker-stack.yml
-        host: ${{ secrets.HOST }}
-        user: ${{ secrets.USER }}
-        ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-        env_file: ./envfile
+    - name: Copy files to server
+      run: |
+        scp -i ~/.ssh/id_rsa docker-stack.yml ${{ secrets.USER }}@${{ secrets.HOST }}:~/
+        scp -i ~/.ssh/id_rsa envfile ${{ secrets.USER }}@${{ secrets.HOST }}:~/envfile
+
+    - name: Deploy Docker Stack
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+          # Load environment variables
+          export $(cat ~/envfile | xargs)
+          
+          # Deploy the stack
+          docker stack deploy -c ~/docker-stack.yml --with-registry-auth nextjs-pipeline
+          
+          # Clean up
+          rm ~/docker-stack.yml ~/envfile
+        EOF
