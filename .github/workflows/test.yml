@@ -7,7 +7,14 @@ jobs:
   test-ssh:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup SSH key
+        run: |
+          eval $(ssh-agent -s)
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" | ssh-add -
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+    
       - name: Test SSH connectivity
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} "echo connected successfully"
+          ssh -v ${{ secrets.USER }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
 
