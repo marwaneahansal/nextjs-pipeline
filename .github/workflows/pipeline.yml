@@ -65,6 +65,9 @@ jobs:
     - name: Deploy Docker Stack
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+          # Login to GitHub Container Registry
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
           # Load environment variables
           export $(cat ~/envfile | xargs)
           
